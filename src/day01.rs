@@ -24,9 +24,8 @@ mod day01 {
 
     fn count_increases(depths: Vec<i32>) -> i32 {
         depths
-            .iter()
-            .zip(depths.iter().skip(1))
-            .fold(0, |acc, (prev, curr)| if curr > prev { acc + 1 } else { acc })
+            .windows(2)
+            .fold(0, |acc, w| if w[1] > w[0] { acc + 1 } else { acc })
     }
 
     #[test]
@@ -35,19 +34,16 @@ mod day01 {
         assert_eq!(count_increases(depth_list), 7)
     }
 
-    fn windowed_sum(nums: Vec<i32>) -> Vec<i32> {
-        nums
-            .iter()
-            .zip(nums.iter().skip(1))
-            .zip(nums.iter().skip(2))
-            .map(|((one, two), three)| one + two + three)
+    fn windowed_sum(nums: Vec<i32>, size: usize) -> Vec<i32> {
+        nums.windows(size)
+            .map(|nums| nums.iter().sum())
             .collect()
     }
 
     #[test]
     fn test_increases_windowed() {
         let (_, depth_list) = parse::depths(TEST_INPUT).unwrap();
-        assert_eq!(count_increases(windowed_sum(depth_list)), 5)
+        assert_eq!(count_increases(windowed_sum(depth_list, 3)), 5)
     }
 
     #[test]
@@ -64,7 +60,7 @@ mod day01 {
     fn part2_answer() {
         let input = puzzle_input("01");
         let (_, depth_list) = parse::depths(&input).unwrap();
-        let increases = count_increases(windowed_sum(depth_list));
+        let increases = count_increases(windowed_sum(depth_list, 3));
 
         println!("Number of increases (windowed): {}", increases);
         assert_eq!(1781, increases);
