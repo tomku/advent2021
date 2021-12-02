@@ -5,12 +5,17 @@ mod day01 {
     use crate::util::puzzle_input;
 
     mod parse {
-        use nom::{IResult, Parser};
         use nom::character::complete::{digit1, newline};
+        use nom::combinator::map_res;
+        use nom::IResult;
         use nom::multi::separated_list1;
 
+        pub fn digits_as_i32(input: &str) -> IResult<&str, i32> {
+            map_res(digit1, |num| str::parse(num))(input)
+        }
+
         pub(crate) fn depths(input: &str) -> IResult<&str, Vec<i32>> {
-            separated_list1(newline, digit1.map(|num| str::parse(num).unwrap()))(input)
+            separated_list1(newline, digits_as_i32)(input)
         }
     }
 
