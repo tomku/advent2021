@@ -19,6 +19,32 @@ pub struct AimedPosition {
     pub aim: i32,
 }
 
+pub fn perform_direct(pos: Position, cmd: &Command) -> Position {
+    match cmd {
+        Command::Forward(d) => Position { distance: pos.distance + d, ..pos },
+        Command::Up(d) => Position { depth: pos.depth - d, ..pos },
+        Command::Down(d) => Position { depth: pos.depth + d, ..pos }
+    }
+}
+
+pub const INITIAL: Position = Position { depth: 0, distance: 0 };
+
+pub fn perform_aimed(state: AimedPosition, cmd: &Command) -> AimedPosition {
+    match cmd {
+        Command::Forward(d) => AimedPosition {
+            pos: Position {
+                distance: state.pos.distance + d,
+                depth: state.pos.depth + state.aim * d,
+            },
+            ..state
+        },
+        Command::Up(d) => AimedPosition { aim: state.aim - d, ..state },
+        Command::Down(d) => AimedPosition { aim: state.aim + d, ..state }
+    }
+}
+
+pub const INITIAL_AIM: AimedPosition = AimedPosition { aim: 0, pos: INITIAL };
+
 pub mod parse {
     use nom::{IResult, Parser};
     use nom::branch::alt;
@@ -62,26 +88,17 @@ pub mod parse {
 mod test {
     use crate::util::puzzle_input;
 
-    use super::{AimedPosition, Position};
-    use super::Command::{self, *};
+    use super::*;
 
     const TEST_INPUT: &str = "forward 5\ndown 5\nforward 8\nup 3\ndown 8\nforward 2\n";
 
     #[test]
     fn test_parse() {
+        use super::Command::*;
+
         let (_, commands) = super::parse::commands(TEST_INPUT).unwrap();
         assert_eq!(commands, [Forward(5), Down(5), Forward(8), Up(3), Down(8), Forward(2)])
     }
-
-    fn perform_direct(pos: Position, cmd: &Command) -> Position {
-        match cmd {
-            Forward(d) => Position { distance: pos.distance + d, ..pos },
-            Up(d) => Position { depth: pos.depth - d, ..pos },
-            Down(d) => Position { depth: pos.depth + d, ..pos }
-        }
-    }
-
-    const INITIAL: Position = Position { depth: 0, distance: 0 };
 
     #[test]
     fn test_perform_direct() {
@@ -101,22 +118,6 @@ mod test {
         assert_eq!(last.depth, 738);
         assert_eq!(last.distance, 2011);
     }
-
-    fn perform_aimed(state: AimedPosition, cmd: &Command) -> AimedPosition {
-        match cmd {
-            Forward(d) => AimedPosition {
-                pos: Position {
-                    distance: state.pos.distance + d,
-                    depth: state.pos.depth + state.aim * d,
-                },
-                ..state
-            },
-            Up(d) => AimedPosition { aim: state.aim - d, ..state },
-            Down(d) => AimedPosition { aim: state.aim + d, ..state }
-        }
-    }
-
-    const INITIAL_AIM: AimedPosition = AimedPosition { aim: 0, pos: INITIAL };
 
     #[test]
     fn test_perform_aimed() {
