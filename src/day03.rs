@@ -1,5 +1,3 @@
-extern crate nom;
-
 fn gamma_epsilon(input: &Vec<u32>) -> (u32, u32) {
     let digits = input.iter().max().unwrap().next_power_of_two().trailing_zeros();
     let bits = input.len() as u32;

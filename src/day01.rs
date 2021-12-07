@@ -1,5 +1,3 @@
-extern crate nom;
-
 #[cfg(test)]
 mod day01 {
     use crate::util::puzzle_input;

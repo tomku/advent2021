@@ -1,5 +1,3 @@
-extern crate nom;
-
 #[derive(Debug, PartialEq, Eq)]
 pub enum Command {
     Forward(i32),

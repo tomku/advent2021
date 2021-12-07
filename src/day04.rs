@@ -1,5 +1,3 @@
-extern crate nom;
-
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum BingoSquare {
     Filled(u32),
