@@ -33,10 +33,8 @@ impl std::ops::DerefMut for BingoBoard {
 impl BingoBoard {
     pub fn mark(&mut self, num: u32) {
         for sq in self.iter_mut() {
-            match sq {
-                BingoSquare::Open(n)
-                if *n == num => *sq = BingoSquare::Filled(*n),
-                _ => {}
+            if let BingoSquare::Open(n) = sq {
+                if *n == num { *sq = BingoSquare::Filled(*n) }
             }
         }
     }
