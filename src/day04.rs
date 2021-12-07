@@ -4,58 +4,77 @@ pub enum BingoSquare {
     Open(u32),
 }
 
-fn is_filled(sq: &BingoSquare) -> bool {
-    match sq {
-        BingoSquare::Filled(_) => true,
-        BingoSquare::Open(_) => false
+impl BingoSquare {
+    fn is_filled(&self) -> bool {
+        match self {
+            BingoSquare::Filled(_) => true,
+            BingoSquare::Open(_) => false
+        }
     }
 }
 
-type BingoBoard = Vec<BingoSquare>;
+#[derive(Clone)]
+pub struct BingoBoard(Vec<BingoSquare>);
 
-pub fn mark(num: u32, board: &mut BingoBoard) {
-    for sq in board {
-        match sq {
-            BingoSquare::Open(n)
-            if *n == num => *sq = BingoSquare::Filled(*n),
-            _ => {}
+impl std::ops::Deref for BingoBoard {
+    type Target = Vec<BingoSquare>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::DerefMut for BingoBoard {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl BingoBoard {
+    pub fn mark(&mut self, num: u32) {
+        for sq in self.iter_mut() {
+            match sq {
+                BingoSquare::Open(n)
+                if *n == num => *sq = BingoSquare::Filled(*n),
+                _ => {}
+            }
         }
+    }
+
+    pub fn open_nums(&self) -> u32 {
+        self.iter().map(|&sq| match sq {
+            BingoSquare::Filled(_) => 0,
+            BingoSquare::Open(n) => n
+        }).sum()
+    }
+
+    pub fn is_winner(&self) -> bool {
+        for col in 0..5 {
+            if self.iter().skip(col).step_by(5).all(|sq| sq.is_filled()) {
+                return true;
+            }
+        }
+
+        for row in self.chunks(5) {
+            if row.iter().all(|sq| sq.is_filled()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 
 pub fn call(num: u32, boards: &mut Vec<BingoBoard>) {
     for b in boards {
-        mark(num, b);
+        b.mark(num);
     }
-}
-
-pub fn open_nums(board: BingoBoard) -> u32 {
-    board.iter().map(|&sq| match sq {
-        BingoSquare::Filled(_) => 0,
-        BingoSquare::Open(n) => n
-    }).sum()
-}
-
-pub fn is_winner(board: &&BingoBoard) -> bool {
-    for col in 0..5 {
-        if board.iter().skip(col).step_by(5).all(is_filled) {
-            return true;
-        }
-    }
-
-    for row in board.chunks(5) {
-        if row.iter().all(is_filled) {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 pub fn play_until_winner(nums: Vec<u32>, boards: &mut Vec<BingoBoard>) -> Option<(u32, BingoBoard)> {
     for n in nums {
         call(n, boards);
-        if let Some(w) = boards.iter().find(is_winner) {
+        if let Some(w) = boards.iter().find(|b| b.is_winner()) {
             return Some((n, w.clone()));
         }
     }
@@ -69,7 +88,7 @@ pub fn play_until_last_winner(nums: Vec<u32>, boards: &mut Vec<BingoBoard>) -> O
             return Some((n, boards[0].clone()));
         }
         call(n, boards);
-        boards.retain(|b| !is_winner(&b));
+        boards.retain(|b| !b.is_winner());
     }
     return None;
 }
@@ -78,6 +97,7 @@ mod parse {
     use nom::{IResult, Parser};
     use nom::bytes::complete::tag;
     use nom::character::complete::{multispace0, newline, u32 as num};
+    use nom::combinator::map;
     use nom::multi::{count, many1, separated_list1};
     use nom::sequence::{preceded, terminated, tuple};
 
@@ -91,7 +111,10 @@ mod parse {
     }
 
     fn board(input: &str) -> IResult<&str, BingoBoard> {
-        count(preceded(multispace0, num.map(BingoSquare::Open)), 25)(input)
+        map(count(
+            preceded(multispace0, num.map(BingoSquare::Open)),
+            25),
+            BingoBoard)(input)
     }
 
     pub fn bingo_game(input: &str) -> IResult<&str, (Vec<u32>, Vec<BingoBoard>)> {
@@ -142,7 +165,7 @@ mod test {
         let (_, (calls, mut boards)) = parse::bingo_game(TEST_INPUT).unwrap();
         let (last_num, winner) = play_until_winner(calls, &mut boards).unwrap();
         assert_eq!(last_num, 24);
-        assert_eq!(open_nums(winner), 188)
+        assert_eq!(winner.open_nums(), 188)
     }
 
     #[test]
@@ -150,7 +173,7 @@ mod test {
         let (_, (calls, mut boards)) = parse::bingo_game(TEST_INPUT).unwrap();
         let (last_num, winner) = play_until_last_winner(calls, &mut boards).unwrap();
         assert_eq!(last_num, 13);
-        assert_eq!(open_nums(winner), 148)
+        assert_eq!(winner.open_nums(), 148)
     }
 
     #[test]
@@ -160,7 +183,7 @@ mod test {
         let (last_num, winner) = play_until_winner(calls, &mut boards).unwrap();
 
         assert_eq!(last_num, 78);
-        assert_eq!(open_nums(winner), 715)
+        assert_eq!(winner.open_nums(), 715)
     }
 
     #[test]
@@ -170,6 +193,6 @@ mod test {
         let (last_num, winner) = play_until_last_winner(calls, &mut boards).unwrap();
 
         assert_eq!(last_num, 10);
-        assert_eq!(open_nums(winner), 298)
+        assert_eq!(winner.open_nums(), 298)
     }
 }
