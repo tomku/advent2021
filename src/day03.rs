@@ -29,11 +29,11 @@ fn rating(mut vecs: Vec<u32>, most_common: bool) -> u32 {
             .count();
 
         let zeroes = vecs.len() - ones;
-        if ones >= zeroes {
-            vecs = vecs.iter().filter(|&&x| most_common ^ !nth_bit_set(x, b)).copied().collect()
-        } else if ones < zeroes {
-            vecs = vecs.iter().filter(|&&x| most_common ^ nth_bit_set(x, b)).copied().collect()
-        }
+        vecs = vecs
+            .iter()
+            .filter(|&&x| most_common ^ (ones >= zeroes) ^ nth_bit_set(x, b))
+            .copied()
+            .collect();
 
         if vecs.len() < 2 {
             break;
