@@ -1,3 +1,35 @@
+fn distances_linear(crabs: &Vec<i64>) -> Vec<i64> {
+    let max = *crabs.iter().max().unwrap() as usize;
+    let mut dists = Vec::with_capacity(max);
+    let mut current_dist: i64 = crabs.iter().sum();
+    let mut i: usize = 0;
+
+    for pos in 0..max {
+        while i < crabs.len() && &crabs[i] <= &(pos as i64) { i += 1; }
+
+        current_dist += 2 * i as i64 - crabs.len() as i64;
+        dists.push(current_dist);
+    }
+    dists
+}
+
+fn distances_nonlinear(crabs: &Vec<i64>) -> Vec<i64> {
+    let max = *crabs.iter().max().unwrap() as usize;
+    let mut dists = Vec::with_capacity(max);
+
+    for pos in 0..max {
+        let mut total = 0;
+        for c in crabs {
+            let n = (pos as i64 - c).abs();
+
+            total += (n * (n + 1)) / 2
+        }
+        dists.push(total);
+    }
+    dists
+}
+
+
 mod parse {
     use nom::bytes::complete::tag;
     use nom::character::complete::i64 as num;
@@ -15,37 +47,6 @@ mod test {
     use super::*;
 
     const TEST_INPUT: &str = "16,1,2,0,4,2,7,1,2,14";
-
-    fn distances_linear(crabs: &Vec<i64>) -> Vec<i64> {
-        let max = *crabs.iter().max().unwrap() as usize;
-        let mut dists = Vec::with_capacity(max);
-        let mut current_dist: i64 = crabs.iter().sum();
-        let mut i: usize = 0;
-
-        for pos in 0..max {
-            while i < crabs.len() && &crabs[i] <= &(pos as i64) { i += 1; }
-
-            current_dist += 2 * i as i64 - crabs.len() as i64;
-            dists.push(current_dist);
-        }
-        dists
-    }
-
-    fn distances_nonlinear(crabs: &Vec<i64>) -> Vec<i64> {
-        let max = *crabs.iter().max().unwrap() as usize;
-        let mut dists = Vec::with_capacity(max);
-
-        for pos in 0..max {
-            let mut total = 0;
-            for c in crabs {
-                let n = (pos as i64 - c).abs();
-
-                total += (n * (n + 1)) / 2
-            }
-            dists.push(total);
-        }
-        dists
-    }
 
     #[test]
     fn test_parse() {
