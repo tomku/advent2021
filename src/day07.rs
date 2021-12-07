@@ -19,12 +19,14 @@ mod test {
     fn distances_linear(crabs: &Vec<i64>) -> Vec<i64> {
         let max = *crabs.iter().max().unwrap() as usize;
         let mut dists = Vec::with_capacity(max);
+        let mut current_dist: i64 = crabs.iter().sum();
+        let mut i: usize = 0;
+
         for pos in 0..max {
-            let mut total = 0;
-            for c in crabs {
-                total += (pos as i64 - c).abs()
-            }
-            dists.push(total);
+            while i < crabs.len() && &crabs[i] <= &(pos as i64) { i += 1; }
+
+            current_dist += 2 * i as i64 - crabs.len() as i64;
+            dists.push(current_dist);
         }
         dists
     }
@@ -53,7 +55,8 @@ mod test {
 
     #[test]
     fn test_dists() {
-        let (_, fish) = parse::crab_list(TEST_INPUT).unwrap();
+        let (_, mut fish) = parse::crab_list(TEST_INPUT).unwrap();
+        fish.sort();
         let d = *distances_linear(&fish).iter().min().unwrap();
         assert_eq!(d, 37);
     }
@@ -61,14 +64,16 @@ mod test {
     #[test]
     fn part1() {
         let input = puzzle_input("07");
-        let (_, fish) = parse::crab_list(&input).unwrap();
+        let (_, mut fish) = parse::crab_list(&input).unwrap();
+        fish.sort();
         let d = *distances_linear(&fish).iter().min().unwrap();
         assert_eq!(d, 333755);
     }
 
     #[test]
     fn test_dist_nonlinear() {
-        let (_, fish) = parse::crab_list(TEST_INPUT).unwrap();
+        let (_, mut fish) = parse::crab_list(TEST_INPUT).unwrap();
+        fish.sort();
         let d = *distances_nonlinear(&fish).iter().min().unwrap();
         assert_eq!(d, 168);
     }
@@ -76,7 +81,8 @@ mod test {
     #[test]
     fn part2() {
         let input = puzzle_input("07");
-        let (_, fish) = parse::crab_list(&input).unwrap();
+        let (_, mut fish) = parse::crab_list(&input).unwrap();
+        fish.sort();
         let d = *distances_nonlinear(&fish).iter().min().unwrap();
         assert_eq!(d, 94017638);
     }
