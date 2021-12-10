@@ -5,13 +5,15 @@ fn low_points(lava_map: &HashMap<(i32, i32), u32>, (cols, rows): (usize, usize))
     for y in 0..rows as i32 {
         for x in 0..cols as i32 {
             let current = *lava_map.get(&(x, y)).unwrap();
-            let left = *lava_map.get(&(x - 1, y)).unwrap_or(&9);
-            let right = *lava_map.get(&(x + 1, y)).unwrap_or(&9);
             let above = *lava_map.get(&(x, y - 1)).unwrap_or(&9);
+            if current >= above { continue; }
+            let left = *lava_map.get(&(x - 1, y)).unwrap_or(&9);
+            if current >= left { continue; }
+            let right = *lava_map.get(&(x + 1, y)).unwrap_or(&9);
+            if current >= right { continue; }
             let below = *lava_map.get(&(x, y + 1)).unwrap_or(&9);
-            if current < left && current < right && current < above && current < below {
-                lows.push((x, y));
-            }
+            if current >= below { continue; }
+            lows.push((x, y));
         }
     }
     lows
