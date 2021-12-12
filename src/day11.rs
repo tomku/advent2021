@@ -1,5 +1,3 @@
-use std::fmt::Formatter;
-
 pub struct Grid {
     cells: Vec<u8>,
     flash_queue: Vec<usize>,
@@ -85,7 +83,7 @@ impl Grid {
 }
 
 impl std::fmt::Display for Grid {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for y in 0..10 {
             for x in 0..10 {
                 let c = self.cells[y * 10 + x];
