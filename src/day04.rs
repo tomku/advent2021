@@ -16,23 +16,9 @@ impl BingoSquare {
 #[derive(Clone)]
 pub struct BingoBoard(Vec<BingoSquare>);
 
-impl std::ops::Deref for BingoBoard {
-    type Target = Vec<BingoSquare>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl std::ops::DerefMut for BingoBoard {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
 impl BingoBoard {
     pub fn mark(&mut self, num: u32) {
-        for sq in self.iter_mut() {
+        for sq in self.0.iter_mut() {
             if let BingoSquare::Open(n) = sq {
                 if *n == num { *sq = BingoSquare::Filled(*n) }
             }
@@ -40,7 +26,7 @@ impl BingoBoard {
     }
 
     pub fn open_nums(&self) -> u32 {
-        self.iter().map(|&sq| match sq {
+        self.0.iter().map(|&sq| match sq {
             BingoSquare::Filled(_) => 0,
             BingoSquare::Open(n) => n
         }).sum()
@@ -48,12 +34,12 @@ impl BingoBoard {
 
     pub fn is_winner(&self) -> bool {
         for col in 0..5 {
-            if self.iter().skip(col).step_by(5).all(|sq| sq.is_filled()) {
+            if self.0.iter().skip(col).step_by(5).all(|sq| sq.is_filled()) {
                 return true;
             }
         }
 
-        for row in self.chunks(5) {
+        for row in self.0.chunks(5) {
             if row.iter().all(|sq| sq.is_filled()) {
                 return true;
             }
@@ -154,8 +140,8 @@ mod test {
         let (_, (calls, boards)) = parse::bingo_game(TEST_INPUT).unwrap();
         assert_eq!(calls[0], 7);
         assert_eq!(calls[26], 1);
-        assert_eq!(boards[2][0], BingoSquare::Open(14));
-        assert_eq!(boards[2][24], BingoSquare::Open(7));
+        assert_eq!(boards[2].0[0], BingoSquare::Open(14));
+        assert_eq!(boards[2].0[24], BingoSquare::Open(7));
     }
 
     #[test]
