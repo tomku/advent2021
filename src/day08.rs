@@ -1,67 +1,66 @@
 use std::collections::HashMap;
 
-fn count_unique_lengths(entries: &Vec<Entry>) -> usize {
-    entries.iter().map(|e|
-        e.outputs.iter().filter(|p| match p.len() {
+pub struct Entry {
+    patterns: Vec<String>,
+    outputs: Vec<String>,
+}
+
+impl Entry {
+    fn count_unique_lengths(&self) -> usize {
+        self.outputs.iter().filter(|p| match p.len() {
             2 => true,
             4 => true,
             3 => true,
             7 => true,
             _ => false
         }).count()
-    ).sum()
-}
+    }
+    fn deduce(&self) -> HashMap<String, &str> {
+        let one = self.patterns.iter().find(|p| p.len() == 2).unwrap();
 
-fn deduce(e: &Entry) -> HashMap<String, &str> {
-    let one = e.patterns.iter().find(|p| p.len() == 2).unwrap();
+        let one_first = one.chars().nth(0).unwrap();
+        let one_second = one.chars().nth(1).unwrap();
 
-    let one_first = one.chars().nth(0).unwrap();
-    let one_second = one.chars().nth(1).unwrap();
+        let seven = self.patterns.iter().find(|p| p.len() == 3).unwrap();
+        let four = self.patterns.iter().find(|p| p.len() == 4).unwrap();
+        let eight = self.patterns.iter().find(|p| p.len() == 7).unwrap();
 
-    let seven = e.patterns.iter().find(|p| p.len() == 3).unwrap();
-    let four = e.patterns.iter().find(|p| p.len() == 4).unwrap();
-    let eight = e.patterns.iter().find(|p| p.len() == 7).unwrap();
+        let six = self.patterns.iter().filter(|&p| p.len() == 6)
+            .find(|&p| { !(p.contains(one_first) && p.contains(one_second)) }).unwrap();
 
-    let six = e.patterns.iter().filter(|&p| p.len() == 6)
-        .find(|&p| { !(p.contains(one_first) && p.contains(one_second)) }).unwrap();
+        let upright = eight.chars().find(|p| !six.contains(*p)).unwrap();
+        let three = self.patterns.iter().filter(|&p| p.len() == 5)
+            .find(|&p| (p.contains(one_first) && p.contains(one_second))).unwrap();
 
-    let upright = eight.chars().find(|p| !six.contains(*p)).unwrap();
-    let three = e.patterns.iter().filter(|&p| p.len() == 5)
-        .find(|&p| (p.contains(one_first) && p.contains(one_second))).unwrap();
+        let two = self.patterns.iter().filter(|&p| p.len() == 5)
+            .find(|&p| { p != three && p.contains(upright) }).unwrap();
 
-    let two = e.patterns.iter().filter(|&p| p.len() == 5)
-        .find(|&p| { p != three && p.contains(upright) }).unwrap();
+        let five = self.patterns.iter().filter(|&p| p.len() == 5)
+            .find(|&p| { p != three && !p.contains(upright) }).unwrap();
 
-    let five = e.patterns.iter().filter(|&p| p.len() == 5)
-        .find(|&p| { p != three && !p.contains(upright) }).unwrap();
+        let lowleft = two.chars().find(|&p| p != upright && !five.contains(p)).unwrap();
+        let nine = eight.replace(lowleft, "");
 
-    let lowleft = two.chars().find(|&p| p != upright && !five.contains(p)).unwrap();
-    let nine = eight.replace(lowleft, "");
+        let zero = self.patterns.iter().find(|&p| p.len() == 6 && p != six && *p != nine).unwrap();
 
-    let zero = e.patterns.iter().find(|&p| p.len() == 6 && p != six && *p != nine).unwrap();
+        HashMap::from([
+            (zero.clone(), "0"),
+            (one.clone(), "1"),
+            (two.clone(), "2"),
+            (three.clone(), "3"),
+            (four.clone(), "4"),
+            (five.clone(), "5"),
+            (six.clone(), "6"),
+            (seven.clone(), "7"),
+            (eight.clone(), "8"),
+            (nine, "9")
+        ])
+    }
 
-    HashMap::from([
-        (zero.clone(), "0"),
-        (one.clone(), "1"),
-        (two.clone(), "2"),
-        (three.clone(), "3"),
-        (four.clone(), "4"),
-        (five.clone(), "5"),
-        (six.clone(), "6"),
-        (seven.clone(), "7"),
-        (eight.clone(), "8"),
-        (nine, "9")
-    ])
-}
-
-fn decode(key: &HashMap<String, &str>, codes: &Entry) -> u32 {
-    let digits: Vec<&str> = codes.outputs.iter().map(|c| key.get(c).unwrap().to_owned()).collect();
-    str::parse::<u32>(&digits.join("")).unwrap()
-}
-
-pub struct Entry {
-    patterns: Vec<String>,
-    outputs: Vec<String>,
+    fn decode(&self, key: &HashMap<String, &str>) -> u32 {
+        let digits: Vec<&str> = self.outputs.iter().map(|c| key.get(c).unwrap().to_owned()).collect();
+        str::parse::<u32>(&digits.join("")).unwrap()
+    }
 }
 
 mod parse {
@@ -124,7 +123,7 @@ gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
     #[test]
     fn test_unique_digit_count() {
         let (_, entries) = parse::all_entries(TEST_INPUT).unwrap();
-        let uniques: usize = count_unique_lengths(&entries);
+        let uniques: usize = entries.iter().map(|e| e.count_unique_lengths()).sum();
         assert_eq!(uniques, 26);
     }
 
@@ -133,7 +132,7 @@ gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
         let input = puzzle_input("08");
         let (_, entries) = parse::all_entries(&input).unwrap();
 
-        let uniques: usize = count_unique_lengths(&entries);
+        let uniques: usize = entries.iter().map(|e| e.count_unique_lengths()).sum();
         assert_eq!(uniques, 392);
     }
 
@@ -141,8 +140,8 @@ gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
     fn test_deduce() {
         let (_, entries) = parse::all_entries(TEST_INPUT).unwrap();
         let total: u32 = entries.iter().map(|e| {
-            let key = deduce(&e);
-            decode(&key, &e)
+            let key = e.deduce();
+            e.decode(&key)
         }).sum();
         assert_eq!(total, 61229)
     }
@@ -152,8 +151,8 @@ gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
         let input = puzzle_input("08");
         let (_, entries) = parse::all_entries(&input).unwrap();
         let total: u32 = entries.iter().map(|e| {
-            let key = deduce(&e);
-            decode(&key, &e)
+            let key = e.deduce();
+            e.decode(&key)
         }).sum();
         assert_eq!(total, 1004688)
     }
